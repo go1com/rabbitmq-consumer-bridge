@@ -7,7 +7,7 @@ services:
 env:
   - RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672/
 install:
-  - go mod vendor
+  - GO111MODULE=on go mod vendor
   - go test
 script:
   - go test -race -v ./...
