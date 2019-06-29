@@ -1,18 +1,9 @@
 stages: ["build", "deploy"]
 
-.setup-ssh-agent: &setup-ssh-agent
-  before_script:
-    - eval $(ssh-agent -s)
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
-    - mkdir -p ~/.ssh
-    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-    - 'echo -e "Host gc-aegir\n	HostName 54.66.226.9\n	User aegir" >> ~/.ssh/config'
-
 build:
   type:  build
   image: registry.code.go1.com.au/go1/docker:golang
   tags: ["aws"]
-  <<: *setup-ssh-agent
   artifacts: { paths: ["artifacts"] }
   services:
     - rabbitmq:3.6-alpine
@@ -30,17 +21,3 @@ build:
     - go mod vendor
     - go test
     - go build -o $CI_PROJECT_DIR/artifacts/app cmd/main.go
-
-deploy:tag:
-  image: go1com/ci-deploy
-  type:  deploy
-  tags: ["aws"]
-  only: ["tags"]
-  dependencies: ["build"]
-  script:
-    - export ROOT=$(pwd)
-    - cd artifacts
-      && cp $ROOT/Dockerfile $CI_PROJECT_DIR/artifacts/Dockerfile
-      && docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.code.go1.com.au
-      && docker build -t registry.code.go1.com.au/microservices/consumer:$CI_COMMIT_TAG .
-      && docker push registry.code.go1.com.au/microservices/consumer:$CI_COMMIT_TAG
