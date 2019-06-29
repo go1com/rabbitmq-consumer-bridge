@@ -6,14 +6,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"go1/consumer"
+	bridge "github.com/go1com/rabbitmq-consumer-bridge"
 )
 
 func main() {
 	ctx := context.Background()
 	forever := make(chan bool)
-	app := consumer.NewApp(forever)
-	cnf := consumer.AppConfigFromEnv()
+	app := bridge.NewApp(forever)
+	cnf := bridge.AppConfigFromEnv()
 
 	if cnf.Debug {
 		logrus.SetLevel(logrus.DebugLevel)

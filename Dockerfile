@@ -1,10 +1,10 @@
-FROM golang:1.11
+FROM golang:1.12-alpine
 
 WORKDIR /go/src/github.com/go1com/rabbitmq-consumer-bridge/
 COPY    . /go/src/github.com/go1com/rabbitmq-consumer-bridge/
 
-RUN go get github.com/golang/dep/cmd/dep
-RUN pwd; ${GOPATH}/bin/dep ensure
+RUN apk add --no-cache git
+RUN GO111MODULE=on go mod vendor
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app /go/src/github.com/go1com/rabbitmq-consumer-bridge/cmd/main.go
 
 FROM alpine:3.8
