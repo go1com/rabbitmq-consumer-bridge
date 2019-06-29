@@ -1,7 +1,7 @@
 RabbitMQ consumer bridge
 ====
 
-A bridge for microservices lazily consuming RabbitMQ services.
+A bridge for microservices to consume RabbitMQ messages lazily.
 
 ## TODO
 
