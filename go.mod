@@ -12,4 +12,3 @@ require (
 	github.com/tidwall/gjson v1.2.2
 	gopkg.in/yaml.v2 v2.2.2
 )
-

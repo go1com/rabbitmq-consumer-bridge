@@ -28,6 +28,10 @@ func (sl *serviceLog) add(item []byte) {
 	sl.items = append(sl.items, item)
 }
 
+func (sl serviceLog) length() int {
+	return len(sl.items)
+}
+
 func getModels(forever chan bool) (*Application, *amqp.Connection, *httptest.Server, *serviceLog) {
 	_, currentFileName, _, _ := runtime.Caller(0)
 	filePath := path.Dir(currentFileName) + "/fixtures/target-http-config.yaml"
@@ -64,7 +68,7 @@ func getModels(forever chan bool) (*Application, *amqp.Connection, *httptest.Ser
 func waitForServiceLog(sl *serviceLog, expectingItems int) {
 	expireTime := time.Now().Add(3 * time.Second)
 
-	for len(sl.items) < expectingItems {
+	for sl.length() < expectingItems {
 		if expireTime.Before(time.Now()) {
 			panic("time over")
 		}
@@ -72,7 +76,7 @@ func waitForServiceLog(sl *serviceLog, expectingItems int) {
 		time.Sleep(200 * time.Microsecond)
 	}
 
-	if len(sl.items) != expectingItems {
+	if sl.length() != expectingItems {
 		panic("unexpected publishing messages")
 	}
 }
