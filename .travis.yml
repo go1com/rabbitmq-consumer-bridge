@@ -1,0 +1,13 @@
+dist:     trusty
+language: go
+go:
+  - stable
+services:
+  - rabbitmq
+env:
+  - RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672/
+install:
+  - go mod vendor
+  - go test
+script:
+  - go test -race -v ./...
