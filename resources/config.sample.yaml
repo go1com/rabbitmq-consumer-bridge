@@ -1,0 +1,33 @@
+debug:  true # Useful to see what's happening inside. Should be disabled (false) on production
+prefix: "group"
+
+http-client:
+  service-url-pattern:           ${SERVICE_URL_PATTERN} # http://SERVICE.ENVIRONMENT.go1.service/consume
+  max-idle-connections:          50  # default: 100. Should be calculated by max-idle-connections-per-host * number of services
+  max-idle-connections-per-host: 20  # default: 20
+  timeout-connection:            "1s"  # default: 1s
+  timeout-request:               "30s" # default: 30s
+
+# When a message is failed to process, we will wait for certain seconds before reprocessing
+retry-intervals: ["5s", "15s", "30s", "45s", "60s"]
+
+rabbitmq:
+  default:
+    url: ${QUEUE_URL}
+
+services:
+  # Simple message routing
+  # ---------------------
+  - name:  "lo-index"
+    queue: "lo-index-service"
+    routes:
+      - name: "lo.create"
+      - name: "lo.update"
+      - name: "lo.delete"
+
+  # Message routing with filters
+  # ---------------------
+  - name:   "event"
+    queue:  "event-service"
+    split:  10 # Instead of process message directly, we split it to child consumers. 0 to disable
+    worker: 1  # Number of workers to be started, don't use this if message priority is important.

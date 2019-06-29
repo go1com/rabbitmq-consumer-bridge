@@ -1,0 +1,57 @@
+services:
+  - name:   "example_1__simple_routing"
+    routes:
+      - name: "lo.create"
+      - name: "lo.update"
+      - name: "lo.delete"
+    target:
+      type: "kafka"
+      kafka:
+        connection: "write" # default value: "default"
+        topic:      "core-lo"
+  - name: "example_2"
+    routes:
+      - name: "user.create"
+      - name: "user.update"
+      - name: "user.delete"
+    target:
+      type: "kafka"
+      kafka:
+        connection: "write"
+        topic:      "core-user"
+
+kafka:
+  write:
+    servers:                ["locahost:9092"]
+    client-id:              "go1_core"
+    timeout:                5s
+    ack:                    int # 0: NoResponse, 1: WaitForLocal, -1: WaitForAll (default)
+    compress:               int # 0: none (default), 1: gzip, 2: snappy, 3: lz4, 4: zstd
+
+# Notes for #consumer developers
+# ---------------------
+# Which library? https://godoc.org/github.com/Shopify/sarama
+# Does Sarama support Kafka Streams? NO
+# How do I fetch an offset for a specific timestamp? Use Client.GetOffset().
+# Why am I getting a nil message from the Sarama consumer? channel closed.
+# Metrics are exposed through https://github.com/rcrowley/go-metrics library in a local registry.
+# Sarama's Consumer implementation does not currently support automatic consumer-group rebalancing and offset tracking.
+# For Zookeeper-based tracking (Kafka 0.8.2 and earlier), the https://github.com/wvanbergen/kafka library builds on Sarama to add this support.
+# For Kafka-based tracking (Kafka 0.9 and later), the https://github.com/bsm/sarama-cluster library builds on Sarama to add this support.
+# Documentation for req/res? https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
+# One important thing to note is that both the SyncProducer and AsyncProducer are thread-safe.
+# [producing] What's `MSG.KEY`?
+# balances strategy?
+#   https://github.com/Shopify/sarama/blob/master/balance_strategy.go
+#   https://stackoverflow.com/questions/28574054/kafka-consumer-rebalancing-algorithm
+# [producing] On the broker side, you may want to change the following settings to get stronger consistency guarantees:
+#   - For your broker, set `unclean.leader.election.enable` to false
+#   - For the topic, you could increase `min.insync.replicas`.
+#
+# Testing
+# ----
+# docker network create msg-broker --driver bridge
+# alias nod=docker run --rm --network msg-broker
+# nod --name zookeeper -p 2181:2181 zookeeper:3.5
+# nod --name kafka     -p 9092:9092 --link zookeeper -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 -e ALLOW_PLAINTEXT_LISTENER=yes -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092  bitnami/kafka:2.1.1
+# nod --name kafka2    -p 9093:9092 --link zookeeper -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 -e ALLOW_PLAINTEXT_LISTENER=yes -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9092 bitnami/kafka:2.1.1

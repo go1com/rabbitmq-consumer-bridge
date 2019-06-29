@@ -1,0 +1,28 @@
+# execute AWS lambda function
+# ---------------------
+# schema of event that will be sent to the function:
+#   method:  POST
+#   url:     /consume?jwt=$ROOT_JWT
+#   headers: {"Content-Type": "application/json"}
+#   body:    {
+#       routingKey: $m.RoutingKey
+#       body:       $m.Body
+#       context:    $m.Headers
+#   }
+
+services:
+  - name:   "name_of_lambda_function"
+    target:
+      type: "lambda"
+    routes:
+      - name: "history.record"
+
+# ---------------------
+# Lambda configuration
+# ---------------------
+lambda:
+  auth-key:         "AKIAJJXCTL5XN5VJY2HQ"
+  auth-secret:      "qr0fJGv20LNbuyfZcvkJHrnS75L/drlKPK0+0p2DVW"
+  region:           "ap-southeast-2"
+  version:          "latest"
+  invocation-type:  "RequestResponse" # RequestResponse, Event

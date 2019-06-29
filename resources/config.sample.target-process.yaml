@@ -1,0 +1,9 @@
+services:
+- name:   "group"
+  target:
+    type: "process"
+    process:
+      cmd: "php /tmp/fn.php"
+      timeout: "5s" # Default is 10s
+  routes:
+  - name: "group.create"

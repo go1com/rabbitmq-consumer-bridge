@@ -1,0 +1,14 @@
+# proxy message to another rabbitMQ broker
+# ---------------------
+services:
+  - name:   "rabbitmq-proxy"
+    queue:  "rabbitmq-proxy"
+    target:
+      type: rabbitmq
+      rabbitmq:
+        url:      ${AMQP_OUT_URL}
+        exchange: "events"
+        type:     "topic"
+    routes:
+      - name: "#"
+        # ^-- condition is supported.

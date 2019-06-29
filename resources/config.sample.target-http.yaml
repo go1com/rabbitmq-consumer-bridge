@@ -1,0 +1,8 @@
+http-client:
+  service-url-pattern: "${SERVICE_URL_PATTERN}/stream/group/consume"
+  timeout-request:     "30s"
+
+services:
+  - name:   "group-index"
+    routes:
+      - name: "group-stream"

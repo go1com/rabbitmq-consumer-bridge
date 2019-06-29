@@ -1,0 +1,39 @@
+debug: true
+
+retry-intervals: ["1s", "1s"]
+
+http-client:
+  service-url-pattern: "http://localhost:8989/consume/SERVICE"
+
+rabbitmq:
+  default:
+    url: "amqp://go1:go1@rabbitmq:5672"
+
+services:
+  - name: "api"
+    routes:
+      - name: "do.public-api.webhook-request"
+      - name: "lo.#"
+      - name: "enrolment.#"
+      - name: "user.#"
+      - name: "ro.create"
+      - name: "ro.delete"
+  - name: "index"
+    routes:
+      - name: "user.create"
+      - name: "user.update"
+  - name: "retry"
+    routes:
+      - name: "retry.event"
+  - name: "collector"
+    routes:
+      - name: "consumer.error"
+  - name: "lazy"
+    routes:
+      - name: "do.#"
+  - name: "event-index"
+    routes:
+      - name: "lo.update"
+        condition:
+          type: "gjson"
+          gjson: { part: "body", "query": "type", "op": "match", "arg": "event" }

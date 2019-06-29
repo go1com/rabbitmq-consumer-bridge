@@ -1,0 +1,22 @@
+debug: true # Useful to see what's happening inside. Should be disabled (false) on production
+
+# If certain message can't be processed permanently, we can configure to drop it.
+dead-letter: &ref-dead-letter
+  condition:          # a message is considered dead if match ALL of conditions listed below
+    attempts: 10      # retried 10 times.
+    timeout:  "10m"   # retried for 10 minutes.
+  target: "http"      # Define how we delivery the dead-letter
+  http:               # HTTP request — Most simple method is publishing a HTTP request.
+    method: "POST"
+    url:    "https://hooks.slack.com/services/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"
+    body:   'payload={"text": %dead-letter%}'
+
+services:
+  - name:  "lo-index"
+    queue: "lo-index-service"
+    dead-letter: # dead-letter can be customised per service definition
+      <<: *ref-dead-letter
+    routes:
+      - name: "lo.create"
+      - name: "lo.update"
+      - name: "lo.delete"

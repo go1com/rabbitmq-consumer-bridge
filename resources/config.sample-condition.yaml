@@ -1,0 +1,19 @@
+services:
+  # Message routing with filters
+  # ---------------------
+  - name:   "event"
+    queue:  "event-service"
+    routes:
+      - name: "lo.update"
+        condition:
+          type: "and"
+          and:
+            - { type: "gjson", gjson: { part: "body", query: "type",                   op: "match", arg: "event"  } } # Only process LO.type = event
+            - { type: "gjson", gjson: { part: "body", query: "embedded.portal.status", op: "match", arg: 1        } } # AND: portal is not disabled
+            - { type: "text",  text:  { part: "headers.X-VERSION",                     op: "match", arg: "v1.0.0" } } # AND: only process v1.0.0
+      - name: "history.#"
+        condition:
+          type: not
+          not:
+            type: gjson
+            gjson: { part: "body", "query": "service", op: "match", arg: "collector" }

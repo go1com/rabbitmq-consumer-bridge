@@ -1,0 +1,16 @@
+services:
+- name:   "history"
+  queue:  "history-v1"
+  routes:
+  - name: "user.create"
+  target:
+    type: "process"
+    process:
+      cmd: "php /tmp/fn.php"
+      timeout: "5s" # Default is 10s
+  pipeline:
+    type: rabbitmq
+    rabbitmq:
+      url:      ${AMQP_OUT_URL}
+      exchange: "events"
+      kind:     "topic"

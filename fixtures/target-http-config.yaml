@@ -1,0 +1,22 @@
+debug:  true
+prefix: "qa"
+
+rabbitmq:
+  default:
+    url: ${QUEUE_URL}
+
+services:
+  - name: "virtual-service"
+    routes:
+      - name: "user.create"
+      - name: "user.update"
+      # - name: "user.delete" <-- don't listen to this event.
+      - name: "lo.update"
+        condition:
+          type: "gjson"
+          gjson: { part: "body", "query": "type", "op": "match", "arg": "event" }
+      - name: "do.#"
+  - name:  "splitting-service"
+    split: 2
+    routes:
+      - name: "ro.delete"

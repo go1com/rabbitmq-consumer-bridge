@@ -1,0 +1,7 @@
+prometheus:
+  server: ${PROMETHEUS_PORT} # localhost:8001
+
+services:
+  - name:  "lo-index"
+    routes:
+      - name: "lo.update"
