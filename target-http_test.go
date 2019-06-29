@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
@@ -32,7 +31,7 @@ func (sl serviceLog) length() int {
 	return len(sl.items)
 }
 
-func getModels(forever chan bool) (*Application, *amqp.Connection, *httptest.Server, *serviceLog) {
+func getModels(forever chan bool) (*amqp.Channel, *serviceLog, func()) {
 	_, currentFileName, _, _ := runtime.Caller(0)
 	filePath := path.Dir(currentFileName) + "/fixtures/target-http-config.yaml"
 
@@ -43,6 +42,7 @@ func getModels(forever chan bool) (*Application, *amqp.Connection, *httptest.Ser
 	queueCnf := *cnf.RabbitMq
 	queueUrl := queueCnf["default"].Url
 	queueCon, _ := connection(queueUrl)
+	ch := channel(queueCon, "topic", "events")
 	sl := &serviceLog{items: [][]byte{}}
 
 	server := httptest.NewServer(
@@ -62,7 +62,15 @@ func getModels(forever chan bool) (*Application, *amqp.Connection, *httptest.Ser
 	<-app.chConsumerStart // worker-1
 	<-app.chConsumerStart // worker-2
 
-	return app, queueCon, server, sl
+	tearDown := func() {
+		app.Terminate()
+		ch.QueuePurge("qa:virtual-service", false)
+		ch.Close()
+		queueCon.Close()
+		server.Close()
+	}
+
+	return ch, sl, tearDown
 }
 
 func waitForServiceLog(sl *serviceLog, expectingItems int) {
@@ -83,17 +91,8 @@ func waitForServiceLog(sl *serviceLog, expectingItems int) {
 
 func TestConsumerBasic(t *testing.T) {
 	forever := make(chan bool)
-	app, con, server, sl := getModels(forever)
-	ch := channel(con, "topic", "events")
-
-	defer func() {
-		app.Terminate()
-		ch.QueuePurge("qa:virtual-service", false)
-		ch.Close()
-		con.Close()
-		server.Close()
-		logrus.WithField("test", t.Name()).Infoln("DONE")
-	}()
+	ch, sl, tearDown := getModels(forever)
+	defer tearDown()
 
 	// Start publishing some messages.
 	msgs := []struct {
@@ -125,17 +124,8 @@ func TestConsumerBasic(t *testing.T) {
 
 func TestMessageFilter(t *testing.T) {
 	forever := make(chan bool)
-	app, con, server, sl := getModels(forever)
-	ch := channel(con, "topic", "events")
-
-	defer func() {
-		app.Terminate()
-		ch.QueuePurge("qa:virtual-service", false)
-		ch.Close()
-		con.Close()
-		server.Close()
-		logrus.WithField("test", t.Name()).Infoln("DONE")
-	}()
+	ch, sl, tearDown := getModels(forever)
+	defer tearDown()
 
 	// Start publishing some messages.
 	msgs := []struct {
@@ -158,19 +148,8 @@ func TestMessageFilter(t *testing.T) {
 
 func TestMessageSplit(t *testing.T) {
 	forever := make(chan bool)
-	app, con, server, sl := getModels(forever)
-	ch := channel(con, "topic", "events")
-
-	time.Sleep(2 * time.Second)
-
-	defer func() {
-		app.Terminate()
-		ch.QueuePurge("qa:virtual-service", false)
-		ch.Close()
-		con.Close()
-		server.Close()
-		logrus.WithField("test", t.Name()).Infoln("DONE")
-	}()
+	ch, sl, tearDown := getModels(forever)
+	defer tearDown()
 
 	// By portal-name & entity-type
 	// ---------------------
@@ -203,17 +182,8 @@ func TestMessageSplit(t *testing.T) {
 
 func TestLazyQueue(t *testing.T) {
 	forever := make(chan bool)
-	app, con, server, sl := getModels(forever)
-	ch := channel(con, "topic", "events")
-
-	defer func() {
-		app.Terminate()
-		ch.QueuePurge("qa:virtual-service", false)
-		ch.Close()
-		con.Close()
-		server.Close()
-		logrus.WithField("test", t.Name()).Infoln("DONE")
-	}()
+	ch, sl, tearDown := getModels(forever)
+	defer tearDown()
 
 	// Start publishing some messages.
 	msgs := []struct {
