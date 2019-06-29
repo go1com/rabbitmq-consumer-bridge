@@ -8,6 +8,5 @@ env:
   - QUEUE_URL=amqp://guest:guest@127.0.0.1:5672/
 install:
   - GO111MODULE=on go mod vendor
-  - go test
 script:
-  - go test -race -v ./...
+  - go test
