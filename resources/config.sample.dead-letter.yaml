@@ -8,7 +8,7 @@ dead-letter: &ref-dead-letter
   target: "http"      # Define how we delivery the dead-letter
   http:               # HTTP request — Most simple method is publishing a HTTP request.
     method: "POST"
-    url:    "https://hooks.slack.com/services/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"
+    url:    "https://hooks.slack.com/services/xxxxx/xxxxx/xxxxx"
     body:   'payload={"text": %dead-letter%}'
 
 services:
