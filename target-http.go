@@ -137,9 +137,27 @@ func (m *Payload) push(client *http.Client, url string) error {
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyReader))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+RootJwt)
-	req.Header.Set("User-Agent", "go1.consumer/"+app.version)
+
+	if nil != app {
+		req.Header.Set("User-Agent", "go1.consumer/"+app.version)
+	}
+
 	if requestId, ok := m.Context["request_id"]; ok {
 		req.Header.Add("X-Request-Id", requestId.(string))
+	}
+
+	for k, v := range m.Context {
+		add := strings.HasPrefix(k, "x-datadog-") ||
+			strings.HasPrefix(k, "x-datadog-") ||
+			strings.HasPrefix(k, "ot-baggage-")
+
+		if add {
+			stringValue, ok := v.(string)
+			if ok {
+				req.Header.Set(k, stringValue)
+				delete(m.Context, k)
+			}
+		}
 	}
 
 	res, err := client.Do(req)

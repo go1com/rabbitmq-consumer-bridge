@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/streadway/amqp"
+	"github.com/stretchr/testify/assert"
 )
 
 type serviceLog struct {
@@ -206,4 +207,32 @@ func TestLazyQueue(t *testing.T) {
 	if !bytes.Contains(sl.items[1], []byte("do.mail.flush")) {
 		t.Error("message `do.mail.flush` is not delivered to service.")
 	}
+}
+
+func TestDistributedTracing(t *testing.T) {
+	payload := Payload{
+		RoutingKey: "foo",
+		Body:       "foo",
+		Context: map[string]interface{}{
+			"x-datadog-trace-id":          "xxxxx-1",
+			"x-datadog-parent-id":         "xxxxx-2",
+			"x-datadog-sampling-priority": 333,
+			"x-datadog-origin":            "xxxxx-4",
+		},
+	}
+
+	var log *http.Request
+
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log = r
+		}))
+	defer ts.Close()
+
+	_ = payload.push(http.DefaultClient, ts.URL)
+	ass := assert.New(t)
+	ass.Equal("xxxxx-1", log.Header.Get("X-Datadog-Trace-Id"))
+	ass.Equal("xxxxx-2", log.Header.Get("X-Datadog-Parent-Id"))
+	ass.Equal("", log.Header.Get("X-Datadog-Sampling-Priority"), "should not have error if failed converting to string")
+	ass.Equal("xxxxx-4", log.Header.Get("X-Datadog-Origin"))
 }
